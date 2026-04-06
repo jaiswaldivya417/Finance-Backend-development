@@ -23,7 +23,7 @@ Open `http://localhost:3000` after running the server.
 ## Setup
 
 ### 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/finance-backend.git
+git clone https://github.com/jaiswaldivya417/finance-backend.git
 cd finance-backend
 
 ### 2. Install dependencies
