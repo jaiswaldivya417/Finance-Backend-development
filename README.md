@@ -80,23 +80,6 @@ Password: admin123
 | GET | /api/dashboard/trends | Monthly trends | Any |
 | GET | /api/dashboard/recent | Recent transactions | Any |
 
-## Project Structure
-finance-backend/
-├── src/
-│   ├── config/
-│   │   └── database.js       # SQLite setup and helpers
-│   ├── middleware/
-│   │   ├── auth.js           # JWT verification
-│   │   └── roleGuard.js      # Role-based access control
-│   ├── routes/               # Express route definitions
-│   ├── controllers/          # Request/response handlers
-│   ├── services/             # Business logic layer
-│   └── validators/           # Input validation rules
-├── public/
-│   └── index.html            # Frontend dashboard
-├── server.js                 # Entry point
-├── .env                      # Environment variables (not committed)
-└── package.json
 
 ## Assumptions
 - sql.js used instead of better-sqlite3 for Windows compatibility
