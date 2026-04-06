@@ -1,0 +1,395 @@
+<!DOCTYPE html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinLedger — Finance Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&amp;family=DM+Mono:wght@400;500&amp;family=Outfit:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css"/>
+
+</head>
+
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+
+    <!-- LOGO -->
+    <div class="login-logo">Fin<span>Ledger</span></div>
+    <div class="login-sub" id="authSubtitle">Welcome back. Sign in to continue.</div>
+
+    <!-- TAB SWITCHER -->
+    <div style="display:flex;gap:0;margin-bottom:28px;background:var(--bg3);border-radius:12px;padding:4px;">
+      <button id="tabLogin" onclick="switchTab('login')"
+        style="flex:1;padding:9px;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;background:var(--accent);color:#0a0a0f;">
+        Sign In
+      </button>
+      <button id="tabRegister" onclick="switchTab('register')"
+        style="flex:1;padding:9px;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--text2);">
+        Register
+      </button>
+    </div>
+
+    <!-- ERROR MESSAGE -->
+    <div id="authError" class="error-msg"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm" class="login-form">
+      <input class="form-input" type="email"    id="loginEmail"    placeholder="Email address"/>
+      <input class="form-input" type="password" id="loginPassword" placeholder="Password"/>
+      <button class="login-btn" onclick="doLogin()">Sign in →</button>
+      <div style="text-align:center;font-size:12px;color:var(--text3)">
+        Don't have an account?
+        <span onclick="switchTab('register')"
+          style="color:var(--accent);cursor:pointer;text-decoration:underline">
+          Register here
+        </span>
+      </div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerForm" class="login-form" style="display:none">
+      <input class="form-input" type="text"     id="regName"     placeholder="Full name"/>
+      <input class="form-input" type="email"    id="regEmail"    placeholder="Email address"/>
+      <input class="form-input" type="password" id="regPassword" placeholder="Password (min 6 characters)"/>
+      <input class="form-input" type="password" id="regConfirm"  placeholder="Confirm password"/>
+      <select class="form-input" id="regRole">
+        <option value="viewer">Viewer — can only view data</option>
+        <option value="analyst">Analyst — can view and add records</option>
+        <option value="admin">Admin — full access</option>
+      </select>
+      <button class="login-btn" onclick="doRegister()">Create account →</button>
+      <div style="text-align:center;font-size:12px;color:var(--text3)">
+        Already have an account?
+        <span onclick="switchTab('login')"
+          style="color:var(--accent);cursor:pointer;text-decoration:underline">
+          Sign in here
+        </span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="appShell" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">Fin<span>Ledger</span></div>
+    <nav>
+      <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard', this)">
+        <span class="nav-icon">◈</span> Dashboard
+      </div>
+      <div class="nav-item" data-page="records" onclick="navigate('records', this)">
+        <span class="nav-icon">≡</span> Records
+      </div>
+      <div class="nav-item" data-page="users" onclick="navigate('users', this)" id="usersNav">
+        <span class="nav-icon">⊹</span> Users
+      </div>
+      <div class="nav-item" data-page="access" onclick="navigate('access', this)">
+        <span class="nav-icon">◉</span> Access Control
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="sidebarAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarName"><%=   %></div>
+          <div class="user-role" id="sidebarRole">admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:12px;justify-content:center" onclick="doLogout()">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Overview</div>
+        <div class="page-subtitle">Your financial summary at a glance</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card income">
+          <div class="stat-label">Total Income</div>
+          <div class="stat-value positive" id="statIncome">—</div>
+          <div class="stat-change" id="statIncomeRecords"></div>
+        </div>
+        <div class="stat-card expense">
+          <div class="stat-label">Total Expenses</div>
+          <div class="stat-value negative" id="statExpense">—</div>
+          <div class="stat-change" id="statExpenseRecords"></div>
+        </div>
+        <div class="stat-card balance">
+          <div class="stat-label">Net Balance</div>
+          <div class="stat-value" id="statBalance">—</div>
+          <div class="stat-change">income − expenses</div>
+        </div>
+        <div class="stat-card records">
+          <div class="stat-label">Total Records</div>
+          <div class="stat-value" id="statRecords">—</div>
+          <div class="stat-change">all transactions</div>
+        </div>
+      </div>
+
+      <!-- Balance meter -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">Income vs Expenses</div>
+        <div class="balance-meter">
+          <div class="balance-track">
+            <div class="balance-income-bar" id="balanceIncomBar" style="width:50%"></div>
+            <div class="balance-expense-bar" id="balanceExpenseBar" style="width:50%"></div>
+          </div>
+          <div class="balance-labels">
+            <span id="balanceLabelIncome">Income 0%</span>
+            <span id="balanceLabelExpense">Expenses 0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <!-- Monthly Trends -->
+        <div class="card">
+          <div class="card-title">Monthly Trends <span>Last 12 months</span></div>
+          <div class="monthly-chart" id="monthlyChart">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:12px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)"><div style="width:8px;height:8px;border-radius:2px;background:rgba(74,222,128,0.7)"></div>Income</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)"><div style="width:8px;height:8px;border-radius:2px;background:rgba(248,113,113,0.7)"></div>Expenses</div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="card-title">Recent Activity</div>
+          <div id="recentList" class="recent-list">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div class="card">
+        <div class="card-title">Category Breakdown</div>
+        <div id="categoryChart" class="bar-chart">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECORDS PAGE -->
+    <div class="page" id="page-records">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="page-title">Records</div>
+          <div class="page-subtitle">All financial transactions</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddRecord()" id="addRecordBtn">+ Add Record</button>
+      </div>
+
+      <div class="filters">
+        <select id="filterType" onchange="loadRecords()">
+          <option value="">All types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+        <input type="text" id="filterCategory" placeholder="Filter category..." style="width:160px" oninput="debounceLoad()">
+        <input type="date" id="filterStart" onchange="loadRecords()">
+        <input type="date" id="filterEnd" onchange="loadRecords()">
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear Filters</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTable">
+              <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="recordsPagination"></div>
+      </div>
+    </div>
+
+    <!-- USERS PAGE -->
+    <div class="page" id="page-users">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="page-title">Users</div>
+          <div class="page-subtitle">Manage users and their roles</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddUser()">+ Add User</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable">
+              <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="usersPagination"></div>
+      </div>
+    </div>
+
+    <!-- ACCESS CONTROL PAGE -->
+    <div class="page" id="page-access">
+      <div class="page-header">
+        <div class="page-title">Access Control</div>
+        <div class="page-subtitle">Role permissions overview</div>
+      </div>
+      <div class="grid-2" style="align-items:start">
+        <div class="card">
+          <div class="card-title">Role Permissions Matrix</div>
+          <div class="perm-grid">
+            <div class="perm-header">Permission</div>
+            <div class="perm-header">Viewer</div>
+            <div class="perm-header">Analyst</div>
+            <div class="perm-header">Admin</div>
+            <!-- rows injected by JS -->
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Your Current Session</div>
+            <div id="sessionInfo"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Role Descriptions</div>
+            <div style="display:flex;flex-direction:column;gap:14px;margin-top:4px">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="badge viewer">Viewer</span></div>
+                <div style="font-size:13px;color:var(--text2)">Read-only access. Can view all records and dashboard summaries but cannot create, edit, or delete anything.</div>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="badge analyst">Analyst</span></div>
+                <div style="font-size:13px;color:var(--text2)">Can create and edit financial records. Access to all analytics and trend data. Cannot manage users.</div>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="badge admin">Admin</span></div>
+                <div style="font-size:13px;color:var(--text2)">Full access. Can manage users, assign roles, create/edit/delete all records, and access all dashboard features.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD / EDIT RECORD MODAL -->
+<div class="modal-overlay" id="recordModal">
+  <div class="modal">
+    <div class="modal-title" id="recordModalTitle">Add Record</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="recType">Type</label>
+        <select class="form-input" id="recType">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount</label>
+        <input class="form-input" type="number" id="recAmount" placeholder="0.00" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="recCategory">Category</label>
+        <input class="form-input" type="text" id="recCategory" placeholder="e.g. Salary">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="recDate">Date</label>
+        <input class="form-input" type="date" id="recDate" title="Select date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes (optional)</label>
+      <input class="form-input" type="text" id="recNotes" placeholder="Add a note...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('recordModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Save Record</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-title" id="userModalTitle">Add User</div>
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" type="text" id="userName" placeholder="John Doe"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="userEmail" placeholder="john@example.com"/>
+    </div>
+    <div class="form-group" id="userPasswordGroup">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="userPassword" placeholder="Min 6 characters"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="userRole">Role</label>
+        <select class="form-input" id="userRole">
+          <option value="viewer">Viewer</option>
+          <option value="analyst">Analyst</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group" id="userStatusGroup">
+        <label class="form-label" for="userStatus">Status</label>
+        <select class="form-input" id="userStatus">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('userModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()">Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/records.js"></script>
+<script src="/js/users.js"></script>
+<script src="/js/app.js"></script>
+
+</body>
+
+</html>
